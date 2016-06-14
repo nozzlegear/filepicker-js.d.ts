@@ -1,0 +1,9 @@
+{
+  "name": "filepicker-js",
+  "main": "filepicker-js.d.ts",
+  "author": "Joshua Harms <joshua@nozzlegear.com>",
+  "description": "A Typescript/Typings definition for filepicker-js.",
+  "ambientDevDependencies": {},
+  "dependencies": {
+  }
+}
