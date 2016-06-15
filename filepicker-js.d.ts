@@ -1,3 +1,36 @@
+export type ValidService = (
+    "BOX" |
+    "COMPUTER" |
+    "DROPBOX" |
+    "EVERNOTE" |
+    "FACEBOOK" |
+    "GMAIL" |
+    "IMAGE_SEARCH" |
+    "FLICKR" |
+    "FTP" |
+    "GITHUB" |
+    "GOOGLE_DRIVE" |
+    "SKYDRIVE" |
+    "PICASA" |
+    "URL" |
+    "WEBCAM" |
+    "INSTAGRAM" |
+    "VIDEO" |
+    "AUDIO" |
+    "ALFRESCO" |
+    "CUSTOMSOURCE" |
+    "CLOUDDRIVE" |
+    "IMGUR" |
+    "CLOUDAPP" |
+    "CONVERT"
+);
+
+export type Conversion = (
+    'crop' | 
+    'rotate' | 
+    'filter'
+)
+
 
 // Documentation: https://www.filestack.com/docs/file-ingestion/javascript-api/pick
 export interface PickOptions
@@ -10,7 +43,118 @@ export interface PickOptions
     maxSize?: number;
     container?: "modal" | "window" | string;
     language?: string;
+    service?: ValidService;
+    services?: ValidService[];
+    openTo?: ValidService;
+    /**
+     * Useful when developing, makes it so the onSuccess callback is fired immediately with dummy data.
+     */
+    debug?: boolean;
+    /**
+     * Background uploads are available in multiple mode. Uploads will start immediately after the user selects a file. By default this is set to true.
+     */
+    backgroundUpload?: boolean;
+    /**
+     * Hides the modal immediately after file is selected. The upload will continue in the background and progress callbacks will continue to be fired as the upload happens. By default this is set to false. Works only for modal mode. 
+     */ 
+    hide?: boolean;
+    /**
+     * Allow to set custom css file url per dialog instance. You can set this option also in developer portal for all application integrations. CustomCss is a Filestack add-on and is not included in basic plans by default.
+     */
+    customCss?: string;
+    /**
+     * Allows a user to provide their own text for the Filestack dialog. Url should use https protocol.
+     */
+    customText?: string;
+    /**
+     * Specify the image quality/compression ratio. Range 0 - 100. 100% quality = 0 compression. By default there is no compression. Works only for jpeg images.
+     */
+    imageQuality?: number;
+    /**
+     * Specify image dimenions. e.g. : {imageDim: [800, 600]}. Local images will be resized (upscaled or downscaled) to the specified dimensions before uploading. The original height to width ratio is maintained. To resize all images based on the width, set [width, null], eg. [800, null]. For the height set [null, height], eg [null, 600]. 
+     */
+    imageDim?: number[];
+    /**
+     * Specify maximum image dimenions. e.g. : {imageMax: [800, 600]}. Images bigger than the specified dimensions will be resized to the max size. 
+     */
+    imageMax?: number[];
+    /**
+     * Specify minimum image dimenions. e.g. : {imageMin: [800, 600]}. Images smaller than the specified dimensions will be upscaled to the minimum size. 
+     */
+    imageMin?: number[];
+    /**
+     * When used in conjunction with the 'CONVERT' service, the conversions array allows you to specify what functions are available in the UI for the user. Include 'crop' to allow the user to crop an image, include 'rotate' to allow a user to rotate the uploaded image left or right, include filter to allow user to blur or sharpen the uploaded image. You can include all the services or a selection of the three. If 'CONVERT' is specified, but no conversions are set, the default behavior is to display the cropping tool only.
+     */
+    conversions?: Conversion[];
+    /**
+     * Specify the crop area height to width ratio. This can be a float, an integer or a ratio like 4/3 or 16/9. By default it is not specifed.
+     */
+    cropRatio?: number;
+    /**
+     * Specify a crop area with fixed dimenions. e.g. : {cropDim: [800, 600]}. The user will only be allowed to move the crop area. If the image is smaller than the specified dimensions the crop area will fill the image.
+     */
+    cropDim?: number[];
+    /**
+     * Specify the maximum dimensions of the crop area. e.g. : {cropMax: [800, 600]}. If the image is smaller than the specified dimensions it won't be applied. Can be used in conjunction with cropRatio and cropMin.
+     */
+    cropMax?: number[];
+    /**
+     * Specify crop area minimum dimensions. e.g. : {cropMin: [400, 300]}. Can be used together with cropMax and cropRatio
+     */
+    cropMin?: number[];
+    /**
+     * If set to true, the user will have to crop all images before uploading them. This works for both single and multiple files mode but no if 'hide' option is set to true. By default set to false.
+     */
+    cropForce?: boolean;
+}
 
+export interface MultiPickOptions extends PickOptions
+{
+    /**
+     * Specify the maximum number of files that the user can upload at a time. If the user tries to upload more than this, they will be presented with an error message. By default, there is no cap on the number of files.
+     */
+    maxFiles?: number;
+    /**
+     * Indicate that users should be able to drop entires folders worth of files at a time. Due to browser support, this is currently only available in recent versions of Chrome. This parameter only applies when multiple is set to be true. By default, folders are not allowed (false). Only available for premium accounts.
+     */
+    folders?: boolean;
+}
+
+export interface PickAndStoreOptions extends MultiPickOptions
+{
+    /**
+     * Specify that the user can upload multiple files, akin to pickMultiple.
+     */
+    multiple?: boolean;
+
+    /**
+     * Where to store the file. The default is S3. Other options are 'azure', 'dropbox', 'rackspace' and 'gcs'. You must have configured your storage in the developer portal to enable this feature. Rackspace, Azure, Dropbox and Google Cloud are only available on the Grow and higher plans. 
+     */
+    location: "S3" | "azure" | "dropbox" | "rackspace" | "gcs";
+
+    /**
+     * The path to store the file at within the specified file store. For S3, this is the key where the file will be stored at. By default, Filestack stores the file at the root at a unique id, followed by an underscore, followed by the filename, for example "3AB239102DB_myphoto.png".
+     * 
+     * If the provided path ends in a '/', it will be treated as a folder, so if the provided path is "myfiles/" and the uploaded file is named "myphoto.png", the file will be stored at "myfiles/909DFAC9CB12_myphoto.png", for example.
+     * 
+     * If the multiple option is set to be true, only paths that end in '/' are allowed.
+     */
+    path?: string;
+
+    /**
+     * The bucket or container in the specified file store where the file should end up. This is especially useful if you have different containers for testing and production and you want to use them both on the same Filestack app. If this parameter is omitted, the file is stored in the default container specified in your developer portal.
+     */
+    storeContainer?: string;
+
+    /**
+     * The region where your storage container is located. This setting currently applies only to S3 buckets.
+     */
+    storeRegion?: string;
+
+    /**
+     * Indicates that the file should be stored in a way that allows public access going directly to the underlying file store. For instance, if the file is stored on S3, this will allow the S3 url to be used directly. This has no impact on the ability of users to read from the Filestack file URL. Defaults to 'private'.
+     */
+    access?: "public" | "private";
 }
 
 export interface FileBlob
@@ -30,4 +174,18 @@ export interface ProgressData
     size: number;
 }
 
+/**
+ * Select and upload a file.
+ */
 export function pick(options: PickOptions, onSuccess: (blob: FileBlob) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+
+/**
+ * Select and upload multiple files at the same time.
+ */
+export function pickMultiple(options: MultiPickOptions, onSuccess: (blobs: FileBlob[]) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+
+/**
+ * Select and upload multiple files straight to your chosen service.    
+ */
+export function pickAndStore(options: PickAndStoreOptions, onSuccess: (blobs: FileBlob[]) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+
