@@ -26,17 +26,23 @@ export type ValidService = (
 );
 
 export type Conversion = (
-    'crop' | 
-    'rotate' | 
+    'crop' |
+    'rotate' |
     'filter'
 )
 
+export interface IWebcam {
+    videoRes: string;
+    audioLen: string;
+    videoLen: string;
+}
 
 // Documentation: https://www.filestack.com/docs/file-ingestion/javascript-api/pick
-export interface PickOptions
-{
-    mimetype?: string | string[];
-    extension?: string | string[];
+export interface IPickOptions {
+    mimetype?: string;
+    mimetypes?: string[];
+    extension?: string;
+    extensions?: string[];
     /**
      * Limit uploads to be at most maxSize, specified in bytes. By default file size is not limited. For example, to make sure files are all less than 10MB, use "10485760" (10*1024*1024).
      */
@@ -46,17 +52,33 @@ export interface PickOptions
     service?: ValidService;
     services?: ValidService[];
     openTo?: ValidService;
+
+    webcamDim?: number[];
+
+    webcam?: IWebcam;
+
+    customSourceContainer?: string;
+
+    customSourcePath?: string;
+
+
     /**
      * Useful when developing, makes it so the onSuccess callback is fired immediately with dummy data.
      */
     debug?: boolean;
+
+    //policy: string;
+
+    //signature: string;
+
     /**
      * Background uploads are available in multiple mode. Uploads will start immediately after the user selects a file. By default this is set to true.
      */
     backgroundUpload?: boolean;
+
     /**
      * Hides the modal immediately after file is selected. The upload will continue in the background and progress callbacks will continue to be fired as the upload happens. By default this is set to false. Works only for modal mode. 
-     */ 
+     */
     hide?: boolean;
     /**
      * Allow to set custom css file url per dialog instance. You can set this option also in developer portal for all application integrations. CustomCss is a Filestack add-on and is not included in basic plans by default.
@@ -108,8 +130,7 @@ export interface PickOptions
     cropForce?: boolean;
 }
 
-export interface MultiPickOptions extends PickOptions
-{
+export interface IMultiPickOptions extends IPickOptions {
     /**
      * Specify the maximum number of files that the user can upload at a time. If the user tries to upload more than this, they will be presented with an error message. By default, there is no cap on the number of files.
      */
@@ -120,17 +141,12 @@ export interface MultiPickOptions extends PickOptions
     folders?: boolean;
 }
 
-export interface PickAndStoreOptions extends MultiPickOptions
-{
-    /**
-     * Specify that the user can upload multiple files, akin to pickMultiple.
-     */
-    multiple?: boolean;
+export interface IPickAndStoreOptions extends IMultiPickOptions {
 
     /**
      * Where to store the file. The default is S3. Other options are 'azure', 'dropbox', 'rackspace' and 'gcs'. You must have configured your storage in the developer portal to enable this feature. Rackspace, Azure, Dropbox and Google Cloud are only available on the Grow and higher plans. 
      */
-    location: "S3" | "azure" | "dropbox" | "rackspace" | "gcs";
+    location?: "S3" | "azure" | "dropbox" | "rackspace" | "gcs";
 
     /**
      * The path to store the file at within the specified file store. For S3, this is the key where the file will be stored at. By default, Filestack stores the file at the root at a unique id, followed by an underscore, followed by the filename, for example "3AB239102DB_myphoto.png".
@@ -152,40 +168,146 @@ export interface PickAndStoreOptions extends MultiPickOptions
     storeRegion?: string;
 
     /**
-     * Indicates that the file should be stored in a way that allows public access going directly to the underlying file store. For instance, if the file is stored on S3, this will allow the S3 url to be used directly. This has no impact on the ability of users to read from the Filestack file URL. Defaults to 'private'.
-     */
+    * Specify that the user can upload multiple files, akin to pickMultiple.
+    */
+    multiple?: boolean;
+    /**
+    * Indicates that the file should be stored in a way that allows public access going directly to the underlying file store. For instance, if the file is stored on S3, this will allow the S3 url to be used directly. This has no impact on the ability of users to read from the Filestack file URL. Defaults to 'private'.
+    */
     access?: "public" | "private";
 }
 
-export interface FileBlob
-{
+export interface FileBlob {
+    /**
+     * The core Filestack url on which all other operations are based.
+     */
     url: string;
+    /**
+     * The filename of the uploaded file.
+     */
     filename: string;
+    /**
+     * The mimetype of the uploaded file.
+     */
     mimetype: string;
+    /**
+     * The size fo the uploaded file in bytes, if available.
+     */
     size: number;
+    /**
+     * The s3 key where we have stored the file.
+     */
+    key?: string;
+    /**
+     * Whether the file can be written to using filpicker.write
+     */
     isWriteable: boolean;
 }
 
-export interface ProgressData
-{
+export interface ProgressData {
     progress: number;
     filename: string;
     mimetype: string;
     size: number;
 }
 
-/**
- * Select and upload a file.
- */
-export function pick(options: PickOptions, onSuccess: (blob: FileBlob) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+export interface IStatOptions {
+    size?: boolean,
+    mimetype?: boolean,
+    filename?: boolean,
+    width?: boolean,
+    height?: boolean,
+    uploaded?: boolean,
+    writeable?: boolean,
+    md5?: boolean,
+    location?: boolean,
+    path?: boolean,
+    container?: boolean,
+    security?: Object;
+}
 
-/**
- * Select and upload multiple files at the same time.
- */
-export function pickMultiple(options: MultiPickOptions, onSuccess: (blobs: FileBlob[]) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+export interface IMetadata {
+    size?: number,
+    mimetype?: string,
+    filename?: string,
+    width?: number,
+    height?: number,
+    uploaded?: boolean,
+    writeable?: boolean,
+    md5?: string,
+    location?: string,
+    path?: string,
+    container?: string,
+    security?: Object;
+}
 
-/**
- * Select and upload multiple files straight to your chosen service.    
- */
-export function pickAndStore(options: PickAndStoreOptions, onSuccess: (blobs: FileBlob[]) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+export interface IStoreOptions {
+    filename?: string;
+    mimetype?: string;
+    location?: "S3" | "azure" | "dropbox" | "rackspace" | "gcs";
+    path?: string;
+    container?: string;
+    storeRegion?: string;
+    access?: string;
+    base64decode?: boolean;
+    security?: Object;
+}
 
+//TODO: add security object
+
+export interface IFilepicker {
+
+    /**
+    * Sets the API Key
+    */
+    setKey(key: string): void;
+
+    /**
+     * Gets file metadata
+     */
+    stat(blob: FileBlob, options: IStatOptions, onSuccess: (metadata: IMetadata) => void, onError: (error: Error) => void): void;
+    /**
+     * 
+     * @param input The data to store, or an object that holds the data. Can be raw data, a Blob, a DOM File Object, or an <input type="file"/>
+     * @param options 
+     * @param onSuccess 
+     * @returns void
+     */
+    store(input: Object, options: IStoreOptions, onSuccess: (blob: FileBlob) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+
+    /**
+     * Select and upload a file.
+     */
+    pick(options: IPickOptions, onSuccess: (blob: FileBlob) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+
+    /**
+     * Select and upload multiple files at the same time.
+     */
+    pickMultiple(options: IMultiPickOptions, onSuccess: (blobs: FileBlob[]) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+
+    /**
+     * Select and upload multiple files straight to your chosen service.    
+     */
+    pickAndStore(pickOptions: IPickAndStoreOptions, storeOptions: IStoreOptions, onSuccess: (blobs: FileBlob[]) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void): void;
+
+    /**
+     * 
+     * @param blob A Blob pointing to the file you'd like to remove.
+     * @param security_options An optional dictionary of key-value pairs that configure the remove
+     * @param onSuccess The function to call if the remove is successful. There are no parameters passed to the callback.
+     * @param onError The function to call if there is an error when removing the file.
+     * @returns {} 
+     */
+    remove(blob: FileBlob, security_options: Object, onSuccess: (blobs: FileBlob) => void, onError: (error: Error) => void);
+
+    /**
+  * 
+  * @param blob A Blob pointing to the file you'd like to write to.
+  * @param security_options An optional dictionary of key-value pairs that configure the remove
+  * @param onSuccess The function to call if the remove is successful. There are no parameters passed to the callback.
+  * @param onError The function to call if there is an error when removing the file.
+  * @param onProgress The progress of the write operation.
+  * @returns {} 
+  */
+    write(target: FileBlob, data: Object, security_options: Object, onSuccess: (blob: FileBlob) => void, onError: (error: Error) => void, onProgress: (data: ProgressData) => void);
+}
